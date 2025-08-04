@@ -99,7 +99,7 @@ server {
 </details>
 
 <details>
-<summary><code>html/asp-redirect.html</code> (新規追加)</summary>
+<summary><code>html/asp-redirect.html</code> </summary>
 
 ```html
 <!DOCTYPE html>
