@@ -17,7 +17,7 @@ ASP（アフィリエイト・サービス・プロバイダ）からのリダ�
 
 -----
 
-## 1\. 環境構築
+## 1. 環境構築
 
 ### 前提
 
@@ -45,8 +45,8 @@ tracking-test/
 
 各ファイルに以下の内容をコピー＆ペーストしてください。
 
-\<details\>
-\<summary\>\<code\>docker-compose.yml\</code\>\</summary\>
+<details>
+<summary><code>docker-compose.yml</code></summary>
 
 ```yaml
 services:
@@ -59,10 +59,10 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
 ```
 
-\</details\>
+</details>
 
-\<details\>
-\<summary\>\<code\>nginx/default.conf\</code\>\</summary\>
+<details>
+<summary><code>nginx/default.conf</code></summary>
 
 ```nginx
 server {
@@ -96,10 +96,10 @@ server {
 }
 ```
 
-\</details\>
+</details>
 
-\<details\>
-\<summary\>\<code\>html/asp-redirect.html\</code\> (新規追加)\</summary\>
+<details>
+<summary><code>html/asp-redirect.html</code> (新規追加)</summary>
 
 ```html
 <!DOCTYPE html>
@@ -129,10 +129,10 @@ server {
 </html>
 ```
 
-\</details\>
+</details>
 
-\<details\>
-\<summary\>\<code\>html/landing.html\</code\>\</summary\>
+<details>
+<summary><code>html/landing.html</code></summary>
 
 ```html
 <!DOCTYPE html>
@@ -152,10 +152,10 @@ server {
 </html>
 ```
 
-\</details\>
+</details>
 
-\<details\>
-\<summary\>\<code\>html/cv.html\</code\>\</summary\>
+<details>
+<summary><code>html/cv.html</code></summary>
 
 ```html
 <!DOCTYPE html>
@@ -198,7 +198,7 @@ server {
 </html>
 ```
 
-\</details\>
+</details>
 
 ### 1.3. hostsファイルの設定
 
@@ -227,7 +227,7 @@ docker-compose restart
 
 -----
 
-## 2\. 動作確認手順
+## 2. 動作確認手順
 
 ブラウザの**デベロッパーツール**（`F12`キーや `Cmd+Opt+I`）を開きながらテストを進めます。
 
@@ -247,7 +247,7 @@ docker-compose restart
 
   * **Consoleタブ**: 「成果通知を送信しました」というログが表示され、エラーがないこと。
   * **Networkタブ**: `sales` というファイルへのリクエストが送信されていること。
-  * **Application \> Cookies**: `landing.html`で`ONEACCOUNT_DELIVERY`が生成され、`cv.html`遷移後に`_oneAccount_...`のCookieが（リピートでなければ）削除されること。
+  * **Application > Cookies**: `landing.html`で`ONEACCOUNT_DELIVERY`が生成され、`cv.html`遷移後に`_oneAccount_...`のCookieが（リピートでなければ）削除されること。
 
 ### テストケース2: 個別機能の基本的な確認
 
@@ -260,7 +260,7 @@ docker-compose restart
 
 -----
 
-## 3\. トラブルシューティング
+## 3. トラブルシューティング
 
 ### "port is already allocated" エラー
 
@@ -287,7 +287,7 @@ docker-compose restart
 
 -----
 
-## 4\. 環境の停止
+## 4. 環境の停止
 
 テストが終了したら、以下のコマンドでコンテナを停止・削除できます。
 
