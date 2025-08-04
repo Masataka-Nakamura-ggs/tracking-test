@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ASP Redirecting...</title>
+</head>
+<body>
+    <div id="debug-info"></div>
+
+    <h1>ASPサイト</h1>
+    <p>広告主サイトへリダイレクトしています...</p>
+
+    <script src="debugger.js"></script>
+    <script>
+        // ベースとなるパラメータを生成
+        let oneAccountValue = 'click-' + Date.now() + '-' + Math.random().toString(36).substring(2);
+
+        // 長さが92文字に満たない場合、ランダムな文字を追加して水増しする
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        while (oneAccountValue.length < 92) {
+            oneAccountValue += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+
+        // 広告主サイトのLPへ、パラメータを付与してリダイレクト
+        const destinationUrl = `http://test-site.local:8080/landing.html?oneAccount=${oneAccountValue}`;
+        console.log(`[ASP側で生成] value: ${oneAccountValue}, length: ${oneAccountValue.length}`);
+
+        // 画面にリダイレクト先URLを表示
+        document.body.innerHTML += `<p><b>リダイレクト先:</b> ${destinationUrl}</p>`;
+
+        // 0.5秒後にリダイレクトを実行
+        setTimeout(() => {
+            window.location.replace(destinationUrl);
+        }, 500);
+    </script>
+</body>
+</html>

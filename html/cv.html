@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>CV Page</title>
+    <script src="04_SampleTrackingScript.js"></script>
+</head>
+<body>
+    <div id="debug-info"></div>
+
+    <h1>CV Page (購入完了)</h1>
+    <p>このページで成果が計測されます。</p>
+
+    <span id="oneAccountSales"></span>
+
+    <script src="debugger.js"></script>
+    <script>
+        // ページの読み込みが完了したら、oneAccountSales関数を実行
+        window.onload = function() {
+            oneAccountSales({
+                pid: 's00000000000001', // 15文字のプログラムID
+                items: [
+                    {
+                        code: 'item-001',
+                        price: 1000,
+                        quantity: 2
+                    },
+                    {
+                        code: 'item-002',
+                        price: 500,
+                        quantity: 1
+                    }
+                ],
+                order_number: 'ORDER-12345',
+                total_price: 2500, // 合計金額
+                currency: 'JPY'
+            });
+        };
+    </script>
+</body>
+</html>
