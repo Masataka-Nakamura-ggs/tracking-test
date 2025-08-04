@@ -228,6 +228,44 @@ docker-compose restart
 
 ### テストケース1: リアルな遷移の再現（推奨）
 
+```mermaid
+sequenceDiagram
+    participant Browser as ブラウザ
+    participant ASP as asp-site.local
+    participant LP as test-site.local (広告主LP)
+    participant CV as another-site.local (広告主CVページ)
+
+    Note over Browser, CV: 【テストケース1: リアルな遷移の再現】
+
+    Browser->>ASP: 1. `asp-redirect.html`にアクセス
+    activate ASP
+
+    ASP-->>ASP: 2. 一意な`oneAccount`パラメータを生成
+    ASP-->>Browser: 3. `oneAccount`付きでLPにリダイレクト
+    deactivate ASP
+
+    Browser->>LP: 4. `landing.html?oneAccount=...` にアクセス
+    activate LP
+    LP-->>Browser: `landing.html` と `04_SampleTrackingScript.js` を返す
+    deactivate LP
+
+    activate Browser
+    Note right of Browser: スクリプトが`oneAccount`パラメータを<br>検知し、Cookie(`ONEACCOUNT_DELIVERY`)に保存
+    deactivate Browser
+
+    Browser->>CV: 5. 「購入ページへ進む」リンクをクリック
+    activate CV
+    CV-->>Browser: `cv.html` と `04_SampleTrackingScript.js` を返す
+    deactivate CV
+
+    activate Browser
+    Note right of Browser: 6. `oneAccountSales()`関数が実行される
+    Note right of Browser: 7. スクリプトがCookieから`oneAccount`を読み込み、<br>成果計測リクエスト(`sales`)を送信。<br>その後Cookieは削除される。
+    deactivate Browser
+
+    Note over Browser, CV: 【動作確認完了】
+```
+
 メディアサイト → ASP → 広告主LP → 広告主CV という実践的なフローをテストします。
 
 1.  テストの開始点として、ASPのリダイレクトページにアクセスします。
