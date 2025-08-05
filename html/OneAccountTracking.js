@@ -91,11 +91,11 @@
          * @param {string} domain - 設定されているドメイン
          */
         delete: (name, domain) => {
-            let cookieStr = `${name}=; Max-Age=-99999999;path=/`;
+            let cookieStr = `${name}=; Max-Age=-99999999;path=/`;   // 有効期限を過去に設定
             if (!/^(localhost|(\d{1,3}\.){3}\d{1,3})$/.test(domain)) {
                 cookieStr += `;domain=${domain}`;
             }
-            document.cookie = cookieStr;
+            document.cookie = cookieStr;    // Cookieを上書き（結果として削除される）
         }
     };
 
@@ -284,9 +284,11 @@
         // リピート成果でない場合、一度利用したクリック識別子のCookieを削除します。
         if (data.repeat !== true) {
             CookieUtil.delete(cookieName, rootDomain);
+            logger.info(`クリック識別子のCookieを削除しました: ${cookieName}`);
         }
         // 役割を終えた中継用のCookieも削除する
         CookieUtil.delete('ONEACCOUNT_DELIVERY', rootDomain);
+        logger.info(`中継用Cookieを削除しました: ONEACCOUNT_DELIVERY`);
     };
 
 })(window, document);
