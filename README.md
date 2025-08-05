@@ -1,6 +1,6 @@
 # トラッキングスクリプト動作確認手順
 
-`04_SampleTrackingScript.js`の成果計測およびクロスドメイン機能の動作を、Dockerを使用してローカル環境で確認するための手順書です。
+`OneAccountTracking.js`（成果計測機能）および `OneAccountCrossDomain.js`（クロスドメイン機能）の動作を、Dockerを使用してローカル環境で確認するための手順書です。
 
 ## 概要
 
@@ -28,7 +28,8 @@ tracking-test/
 ├── docker-compose.yml
 ├── README.md               (このファイル)
 ├── html/
-│   ├── 04_SampleTrackingScript.js
+│   ├── OneAccountCrossDomain.js
+│   ├── OneAccountTracking.js
 │   ├── asp-redirect.html   (ASPリダイレクト模倣ページ)
 │   ├── cv.html
 │   └── landing.html
@@ -94,7 +95,7 @@ server {
 </details>
 
 <details>
-<summary><code>html/asp-redirect.html</code> </summary>
+<summary><code>html/asp-redirect.html</code></summary>
 
 ```html
 <!DOCTYPE html>
@@ -104,14 +105,26 @@ server {
     <title>ASP Redirecting...</title>
 </head>
 <body>
-    <p>ASPサイトから広告主サイトへリダイレクトしています...</p>
+    <div id="debug-info"></div>
+
+    <h1>ASPサイト</h1>
+    <p>広告主サイトへリダイレクトしています...</p>
+
+    <script src="debugger.js"></script>
     <script>
-        // クリックを識別するための一意なパラメータを生成
-        const oneAccountValue = 'click-' + Date.now() + '-' + Math.random().toString(36).substring(2);
+        // ベースとなるパラメータを生成
+        let oneAccountValue = 'click-' + Date.now() + '-' + Math.random().toString(36).substring(2);
+
+        // 長さが92文字に満たない場合、ランダムな文字を追加して水増しする
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        while (oneAccountValue.length < 92) {
+            oneAccountValue += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
 
         // 広告主サイトのLPへ、パラメータを付与してリダイレクト
         const destinationUrl = `http://test-site.local:8080/landing.html?oneAccount=${oneAccountValue}`;
-        
+        console.log(`[ASP側で生成] value: ${oneAccountValue}, length: ${oneAccountValue.length}`);
+
         // 画面にリダイレクト先URLを表示
         document.body.innerHTML += `<p><b>リダイレクト先:</b> ${destinationUrl}</p>`;
 
@@ -135,14 +148,18 @@ server {
 <head>
     <meta charset="UTF-8">
     <title>Landing Page</title>
-    <script src="04_SampleTrackingScript.js"></script>
+    <script src="OneAccountCrossDomain.js"></script>
+    <script src="OneAccountTracking.js"></script>
 </head>
 <body>
+    <div id="debug-info"></div>
+
     <h1>Landing Page (test-site.local)</h1>
     <p>下のリンクをクリックして、別ドメインのCVページに移動します。</p>
 
     <a href="http://another-site.local:8080/cv.html">購入ページへ進む (another-site.local)</a>
 
+    <script src="debugger.js"></script>
 </body>
 </html>
 ```
@@ -158,14 +175,17 @@ server {
 <head>
     <meta charset="UTF-8">
     <title>CV Page</title>
-    <script src="04_SampleTrackingScript.js"></script>
+    <script src="OneAccountTracking.js"></script>
 </head>
 <body>
+    <div id="debug-info"></div>
+
     <h1>CV Page (購入完了)</h1>
     <p>このページで成果が計測されます。</p>
 
     <span id="oneAccountSales"></span>
 
+    <script src="debugger.js"></script>
     <script>
         // ページの読み込みが完了したら、oneAccountSales関数を実行
         window.onload = function() {
@@ -246,21 +266,21 @@ sequenceDiagram
 
     Browser->>LP: 4. `landing.html?oneAccount=...` にアクセス
     activate LP
-    LP-->>Browser: `landing.html` と `04_SampleTrackingScript.js` を返す
+    LP-->>Browser: `landing.html` と `OneAccountCrossDomain.js` 等を返す
     deactivate LP
 
     activate Browser
-    Note right of Browser: スクリプトが`oneAccount`パラメータを<br>検知し、Cookie(`ONEACCOUNT_DELIVERY`)に保存
+    Note right of Browser: `OneAccountCrossDomain.js`が`oneAccount`パラメータを検知し、<br>クロスドメイン用Cookie(`ONEACCOUNT_DELIVERY`)に保存。<br>さらに別ドメインへのリンクURLを書き換える。
     deactivate Browser
 
     Browser->>CV: 5. 「購入ページへ進む」リンクをクリック
     activate CV
-    CV-->>Browser: `cv.html` と `04_SampleTrackingScript.js` を返す
+    CV-->>Browser: `cv.html` と `OneAccountTracking.js` を返す
     deactivate CV
 
     activate Browser
     Note right of Browser: 6. `oneAccountSales()`関数が実行される
-    Note right of Browser: 7. スクリプトがCookieから`oneAccount`を読み込み、<br>成果計測リクエスト(`sales`)を送信。<br>その後Cookieは削除される。
+    Note right of Browser: 7. `OneAccountTracking.js`が`oneAccount`を<br>URLパラメータから取得し、永続Cookie(`_oneAccount_...`)に保存。<br>成果計測リクエストを送信後、Cookieは削除される。
     deactivate Browser
 
     Note over Browser, CV: 【動作確認完了】
@@ -278,18 +298,23 @@ sequenceDiagram
 
 #### 確認するポイント
 
-  * **Consoleタブ**: 「成果通知を送信しました」というログが表示され、エラーがないこと。
-  * **Networkタブ**: `sales` というファイルへのリクエストが送信されていること。
-  * **Application > Cookies**: `landing.html`で`ONEACCOUNT_DELIVERY`が生成され、`cv.html`遷移後に`_oneAccount_...`のCookieが（リピートでなければ）削除されること。
+  * **Consoleタブ**:
+      * `landing.html` で、「クロスドメイン用Cookieを保存...」「クロスドメインリンクを更新...」といったログが表示されること。
+      * `cv.html` で、「成果通知を送信しました」「クリック識別子のCookieを削除しました」というログが表示され、エラーがないこと。
+  * **Networkタブ**:
+      * `cv.html` で、`asp-conversion-pixel.gif?...` という画像ファイルへのリクエストが送信されていること。
+  * **Application > Cookies**:
+      * `landing.html`で`ONEACCOUNT_DELIVERY`というCookieが生成されること。
+      * `cv.html`遷移後、`_oneAccount_...` という永続Cookieが一度保存され、その直後（リピート成果でなければ）に削除されること。また、`ONEACCOUNT_DELIVERY` Cookieも削除されること。
 
 ### テストケース2: 個別機能の基本的な確認
 
 各ページを直接開いて、個別の機能を確認したい場合のテストです。
 
   * **クロスドメイン機能の直接テスト**:
-    `http://test-site.local:8080/landing.html?oneAccount=test_value` にアクセスし、リンクのURLが書き換わるかを確認します。
+    `http://test-site.local:8080/landing.html?oneAccount=test_value` にアクセスします。デベロッパーツールのElementsタブで`<a>`タグを選択し、`href`属性が `http://another-site.local:8080/cv.html?oneAccount=test_value` のように書き換わっていることを確認します。
   * **成果計測の直接テスト**:
-    `http://another-site.local:8080/cv.html?oneAccount=test_value` にアクセスし、成果計測が実行されるかを確認します。
+    `http://another-site.local:8080/cv.html?oneAccount=test_value` にアクセスし、成果計測（`asp-conversion-pixel.gif`の呼び出し）が実行されるかを確認します。
 
 -----
 
@@ -297,8 +322,8 @@ sequenceDiagram
 
 ### "port is already allocated" エラー
 
-  * **原因**: 他のプログラムがポート`80`を使用しています。
-  * **対策**: `docker-compose.yml` の `ports`設定を `"80:80"` から `"8080:80"` など、空いているポートに変更します。その場合、テストURLも `http://...:8080/...` のように変更する必要があります。
+  * **原因**: 他のプログラムがポート`8080`を使用しています。
+  * **対策**: `docker-compose.yml` の `ports`設定を `"8080:80"` から `"8081:80"` など、空いているポートに変更します。その場合、テストURLも `http://...:8081/...` のように変更する必要があります。
 
 ### "503 Service Temporarily Unavailable" エラー
 
@@ -316,7 +341,7 @@ sequenceDiagram
 ### "クリック識別子が取得できませんでした" エラー
 
   * **原因**: `cv.html` に `oneAccount` パラメータが引き継がれていません。テスト手順が誤っている可能性があります。
-  * **対策**: **テストケース1の手順**に従い、ASPのリダイレクトページからテストを開始してください。
+  * **対策**: **テストケース1の手順**に従い、ASPのリダイレクトページからテストを開始してください。`landing.html`で`OneAccountCrossDomain.js`が正しく動作し、リンクが書き換えられているかを確認してください。
 
 -----
 
